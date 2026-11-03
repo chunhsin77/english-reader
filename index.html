@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="互動閱讀器">
+  <title>英文互動閱讀器</title>
+  <style>
+    :root {
+      --primary: #007aff;
+      --bg: #f2f2f7;
+      --card-bg: #ffffff;
+      --text: #1c1c1e;
+      --text-sub: #8e8e93;
+      --highlight: #ffe066;
+      --font-size: 19px;
+      --line-height: 1.8;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-top: env(safe-area-inset-top, 20px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 90px);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.88);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .title-area h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: #e5e5ea;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* 輸入區塊 */
+    .input-section {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 110px;
+      border: 1px solid #d1d1d6;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 16px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .action-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #e5e5ea;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* 閱讀顯示卡片 */
+    #readerCard {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      min-height: 250px;
+      word-break: break-word;
+    }
+
+    .word-token {
+      display: inline;
+      padding: 2px 2px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .word-token:active {
+      background-color: var(--highlight);
+    }
+
+    .word-token.selected {
+      background-color: var(--highlight);
+      font-weight: 600;
+    }
+
+    /* iPhone 底部彈出查詞卡片 (Action Sheet 風格) */
+    #dictSheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18);
+      padding: 18px 20px calc(env(safe-area-inset-bottom, 20px) + 16px) 20px;
+      z-index: 1000;
+      transform: translateY(110%);
+      transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+
+    #dictSheet.active {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 5px;
+      background: #d1d1d6;
+      border-radius: 3px;
+      margin: 0 auto 12px auto;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .sheet-word-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speak-btn {
+      background: #f2f2f7;
+      border: 1px solid #d1d1d6;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sheet-phonetic {
+      font-size: 15px;
+      color: #8e8e93;
+      margin-bottom: 12px;
+    }
+
+    .sheet-meaning-box {
+      background: #f8f8fa;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .close-btn {
+      background: #efeff4;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 14px;
+      font-weight: bold;
+      color: #8e8e93;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航列 -->
+  <header>
+    <div class="title-area">
+      <h1>英文隨點隨讀</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" onclick="adjustFontSize(-2)">A-</button>
+      <button class="btn-icon" onclick="adjustFontSize(2)">A+</button>
+      <button class="btn-icon" onclick="toggleInput()">編輯文章</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 文章輸入/管理區塊 -->
+    <div class="input-section" id="inputSection">
+      <textarea id="inputArticle" placeholder="請在此貼上欲閱讀的英文文章、句子或單字..."></textarea>
+      <div class="action-row">
+        <button class="btn-secondary" onclick="loadSample()">載入範例</button>
+        <button class="btn-primary" onclick="renderText()">開始閱讀</button>
+      </div>
+    </div>
+
+    <!-- 閱讀區 -->
+    <div id="readerCard">
+      點擊上方「編輯文章」或直接貼入英文內容開始閱讀。點選任何單字即可查看即時翻譯與發音。
+    </div>
+  </div>
+
+  <!-- iPhone 底部彈跳抽屜查詞卡片 -->
+  <div id="dictSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-word-title">
+        <span id="sheetWord">Word</span>
+        <button class="speak-btn" onclick="speakCurrentWord()" title="朗讀發音">🔊</button>
+      </div>
+      <button class="close-btn" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-phonetic" id="sheetPhonetic"></div>
+    <div class="sheet-meaning-box" id="sheetMeaning">查詢中...</div>
+  </div>
+
+  <script>
+    let currentFontSize = 19;
+    let selectedToken = null;
+    let currentWordToSpeak = '';
+
+    // 初始化範例文章
+    const sampleText = `The journey of a thousand miles begins with a single step. Continuous learning and daily reading will significantly improve your vocabulary and reading comprehension over time.`;
+
+    window.onload = function() {
+      const savedText = localStorage.getItem('last_read_article');
+      if (savedText) {
+        document.getElementById('inputArticle').value = savedText;
+        renderText();
+      } else {
+        document.getElementById('inputArticle').value = sampleText;
+        renderText();
+      }
+    };
+
+    function loadSample() {
+      document.getElementById('inputArticle').value = sampleText;
+      renderText();
+    }
+
+    function toggleInput() {
+      const sec = document.getElementById('inputSection');
+      sec.style.display = (sec.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function adjustFontSize(delta) {
+      currentFontSize = Math.max(14, Math.min(32, currentFontSize + delta));
+      document.getElementById('readerCard').style.fontSize = currentFontSize + 'px';
+    }
+
+    // 渲染切分單字
+    function renderText() {
+      const text = document.getElementById('inputArticle').value;
+      if (!text.trim()) return;
+
+      localStorage.setItem('last_read_article', text);
+      const container = document.getElementById('readerCard');
+      container.innerHTML = '';
+
+      // 正則拆分單字與標點/空格
+      const regex = /([a-zA-Z0-9'-]+|[^a-zA-Z0-9'-]+)/g;
+      const tokens = text.match(regex) || [];
+
+      tokens.forEach(tok => {
+        if (/^[a-zA-Z]/.test(tok)) {
+          const span = document.createElement('span');
+          span.className = 'word-token';
+          span.textContent = tok;
+          span.onclick = function() {
+            if (selectedToken) selectedToken.classList.remove('selected');
+            span.classList.add('selected');
+            selectedToken = span;
+            lookup(tok);
+          };
+          container.appendChild(span);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = tok;
+          span.style.whiteSpace = 'pre-wrap';
+          container.appendChild(span);
+        }
+      });
+
+      // 載入後自動收起輸入框
+      document.getElementById('inputSection').style.display = 'none';
+    }
+
+    // 發音支援 (iOS WebSpeech 原生支援)
+    function speakCurrentWord() {
+      if (!currentWordToSpeak) return;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(currentWordToSpeak);
+        utter.lang = 'en-US';
+        utter.rate = 0.85;
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    // 查詞函式
+    async function lookup(rawWord) {
+      // 去除單字前後引號或連字號
+      const cleanWord = rawWord.replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, '').toLowerCase();
+      currentWordToSpeak = cleanWord;
+
+      const sheet = document.getElementById('dictSheet');
+      const sWord = document.getElementById('sheetWord');
+      const sPho = document.getElementById('sheetPhonetic');
+      const sMean = document.getElementById('sheetMeaning');
+
+      sWord.textContent = cleanWord;
+      sPho.textContent = '讀取中...';
+      sMean.innerHTML = '<span style="color:#8e8e93;">正在為您查詢釋義...</span>';
+      sheet.classList.add('active');
+
+      try {
+        // 同步請求英英辭典與中英翻譯
+        const dictPromise = fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`)
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null);
+
+        const transPromise = fetch(`https://api.mymemory.translated.net/get?q=${cleanWord}&langpair=en|zh-TW`)
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null);
+
+        const [dictData, transData] = await Promise.all([dictPromise, transPromise]);
+
+        // 處理音標
+        let phonetic = '';
+        let enDef = '';
+        if (dictData && dictData.length > 0) {
+          phonetic = dictData[0].phonetic || (dictData[0].phonetics && dictData[0].phonetics.find(p => p.text)?.text) || '';
+          const firstDef = dictData[0].meanings?.[0]?.definitions?.[0]?.definition || '';
+          if (firstDef) enDef = `<b>[英釋]</b> ${firstDef}`;
+        }
+        sPho.textContent = phonetic ? `/${phonetic.replace(/\//g, '')}/` : '';
+
+        // 處理中文翻譯
+        let zhDef = '';
+        if (transData && transData.responseData) {
+          zhDef = transData.responseData.translatedText || '';
+        }
+
+        if (!zhDef && !enDef) {
+          sMean.innerHTML = '查無相符釋義';
+        } else {
+          let output = '';
+          if (zhDef) {
+            output += `<div style="font-size:18px; font-weight:600; color:#007aff; margin-bottom:6px;">${zhDef}</div>`;
+          }
+          if (enDef) {
+            output += `<div style="color:#555; font-size:14px;">${enDef}</div>`;
+          }
+          sMean.innerHTML = output;
+        }
+
+      } catch (e) {
+        sPho.textContent = '';
+        sMean.innerHTML = '網路連線異常，請稍後重試。';
+      }
+    }
+
+    function closeSheet() {
+      document.getElementById('dictSheet').classList.remove('active');
+      if (selectedToken) {
+        selectedToken.classList.remove('selected');
+        selectedToken = null;
+      }
+    }
+  </script>
+</body>
+</html>
