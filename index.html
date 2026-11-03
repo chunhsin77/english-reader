@@ -15,6 +15,7 @@
       --text: #1c1c1e;
       --text-sub: #8e8e93;
       --highlight: #ffe066;
+      --selection: #b3d7ff;
       --font-size: 19px;
       --line-height: 1.8;
     }
@@ -57,14 +58,15 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .btn-icon {
       background: #e5e5ea;
       border: none;
       border-radius: 20px;
-      padding: 6px 12px;
+      padding: 6px 10px;
       font-size: 14px;
       font-weight: 600;
       color: var(--text);
@@ -73,7 +75,7 @@
 
     .container {
       padding: 16px;
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
@@ -100,7 +102,7 @@
     .action-row {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 8px;
       margin-top: 10px;
     }
 
@@ -109,8 +111,8 @@
       color: white;
       border: none;
       border-radius: 10px;
-      padding: 9px 18px;
-      font-size: 15px;
+      padding: 9px 16px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
     }
@@ -120,10 +122,37 @@
       color: var(--text);
       border: none;
       border-radius: 10px;
-      padding: 9px 14px;
-      font-size: 15px;
+      padding: 9px 12px;
+      font-size: 14px;
       font-weight: 500;
       cursor: pointer;
+    }
+
+    /* 工具按鈕列 (閱讀控制) */
+    .reading-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .btn-tool {
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .btn-translate-all {
+      background: #34c759;
+      color: white;
     }
 
     /* 閱讀顯示卡片 */
@@ -136,12 +165,14 @@
       line-height: var(--line-height);
       min-height: 250px;
       word-break: break-word;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .word-token {
       display: inline;
-      padding: 2px 2px;
-      border-radius: 5px;
+      padding: 2px 1px;
+      border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.15s;
     }
@@ -155,7 +186,34 @@
       font-weight: 600;
     }
 
-    /* iPhone 底部彈出查詞卡片 (Action Sheet 風格) */
+    /* 全文翻譯區塊 */
+    #fullTranslationArea {
+      display: none;
+      margin-top: 16px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border-left: 5px solid #34c759;
+    }
+
+    #fullTranslationArea h3 {
+      margin: 0 0 10px 0;
+      font-size: 17px;
+      color: #34c759;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #fullTransContent {
+      font-size: 17px;
+      line-height: 1.8;
+      color: #2c2c2e;
+      white-space: pre-wrap;
+    }
+
+    /* iPhone 底部抽屜卡片 (Action Sheet) */
     #dictSheet {
       position: fixed;
       left: 0;
@@ -193,12 +251,14 @@
     }
 
     .sheet-word-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #111;
       display: flex;
       align-items: center;
       gap: 10px;
+      max-width: 80%;
+      word-break: break-word;
     }
 
     .speak-btn {
@@ -212,12 +272,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .sheet-phonetic {
       font-size: 15px;
       color: #8e8e93;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .sheet-meaning-box {
@@ -255,7 +316,7 @@
   </header>
 
   <div class="container">
-    <!-- 文章輸入/管理區塊 -->
+    <!-- 文章編輯輸入區塊 -->
     <div class="input-section" id="inputSection">
       <textarea id="inputArticle" placeholder="請在此貼上欲閱讀的英文文章、句子或單字..."></textarea>
       <div class="action-row">
@@ -264,19 +325,35 @@
       </div>
     </div>
 
+    <!-- 閱讀功能列 -->
+    <div class="reading-toolbar">
+      <button class="btn-tool btn-translate-all" onclick="translateFullArticle()">
+        <span>🌐</span> 全文對照翻譯
+      </button>
+    </div>
+
     <!-- 閱讀區 -->
     <div id="readerCard">
-      點擊上方「編輯文章」或直接貼入英文內容開始閱讀。點選任何單字即可查看即時翻譯與發音。
+      載入中...
+    </div>
+
+    <!-- 全文翻譯呈現區 -->
+    <div id="fullTranslationArea">
+      <h3>
+        <span>中文全文對照</span>
+        <button class="btn-icon" style="font-size: 12px;" onclick="closeFullTranslation()">隱藏</button>
+      </h3>
+      <div id="fullTransContent">正在翻譯中...</div>
     </div>
   </div>
 
-  <!-- iPhone 底部彈跳抽屜查詞卡片 -->
+  <!-- iPhone 底部彈跳抽屜查詞/選取翻譯卡片 -->
   <div id="dictSheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <div class="sheet-word-title">
         <span id="sheetWord">Word</span>
-        <button class="speak-btn" onclick="speakCurrentWord()" title="朗讀發音">🔊</button>
+        <button class="speak-btn" id="btnSpeak" onclick="speakCurrentText()" title="朗讀發音">🔊</button>
       </div>
       <button class="close-btn" onclick="closeSheet()">✕</button>
     </div>
@@ -287,20 +364,18 @@
   <script>
     let currentFontSize = 19;
     let selectedToken = null;
-    let currentWordToSpeak = '';
+    let currentTextToSpeak = '';
+    let isFullTranslating = false;
 
-    // 初始化範例文章
     const sampleText = `The journey of a thousand miles begins with a single step. Continuous learning and daily reading will significantly improve your vocabulary and reading comprehension over time.`;
 
     window.onload = function() {
       const savedText = localStorage.getItem('last_read_article');
-      if (savedText) {
-        document.getElementById('inputArticle').value = savedText;
-        renderText();
-      } else {
-        document.getElementById('inputArticle').value = sampleText;
-        renderText();
-      }
+      document.getElementById('inputArticle').value = savedText || sampleText;
+      renderText();
+
+      // 監聽手機螢幕反白選取文字事件 (支援長按反白整句/片段)
+      document.addEventListener('selectionchange', handleSelection);
     };
 
     function loadSample() {
@@ -318,7 +393,7 @@
       document.getElementById('readerCard').style.fontSize = currentFontSize + 'px';
     }
 
-    // 渲染切分單字
+    // 渲染文字節點
     function renderText() {
       const text = document.getElementById('inputArticle').value;
       if (!text.trim()) return;
@@ -327,7 +402,9 @@
       const container = document.getElementById('readerCard');
       container.innerHTML = '';
 
-      // 正則拆分單字與標點/空格
+      // 關閉先前的全文翻譯
+      closeFullTranslation();
+
       const regex = /([a-zA-Z0-9'-]+|[^a-zA-Z0-9'-]+)/g;
       const tokens = text.match(regex) || [];
 
@@ -336,11 +413,15 @@
           const span = document.createElement('span');
           span.className = 'word-token';
           span.textContent = tok;
-          span.onclick = function() {
+          span.onclick = function(e) {
+            // 若使用者剛好正在劃線反白多字，優先由反白處理
+            const sel = window.getSelection().toString().trim();
+            if (sel.length > 0 && sel.includes(' ')) return;
+
             if (selectedToken) selectedToken.classList.remove('selected');
             span.classList.add('selected');
             selectedToken = span;
-            lookup(tok);
+            lookupWord(tok);
           };
           container.appendChild(span);
         } else {
@@ -351,27 +432,25 @@
         }
       });
 
-      // 載入後自動收起輸入框
       document.getElementById('inputSection').style.display = 'none';
     }
 
-    // 發音支援 (iOS WebSpeech 原生支援)
-    function speakCurrentWord() {
-      if (!currentWordToSpeak) return;
+    // 發音支援 (Web Speech API)
+    function speakCurrentText() {
+      if (!currentTextToSpeak) return;
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(currentWordToSpeak);
+        const utter = new SpeechSynthesisUtterance(currentTextToSpeak);
         utter.lang = 'en-US';
         utter.rate = 0.85;
         window.speechSynthesis.speak(utter);
       }
     }
 
-    // 查詞函式
-    async function lookup(rawWord) {
-      // 去除單字前後引號或連字號
+    // 1. 單字查詞 (英英+英漢)
+    async function lookupWord(rawWord) {
       const cleanWord = rawWord.replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, '').toLowerCase();
-      currentWordToSpeak = cleanWord;
+      currentTextToSpeak = cleanWord;
 
       const sheet = document.getElementById('dictSheet');
       const sWord = document.getElementById('sheetWord');
@@ -379,23 +458,19 @@
       const sMean = document.getElementById('sheetMeaning');
 
       sWord.textContent = cleanWord;
-      sPho.textContent = '讀取中...';
-      sMean.innerHTML = '<span style="color:#8e8e93;">正在為您查詢釋義...</span>';
+      sPho.textContent = '查詢中...';
+      sMean.innerHTML = '<span style="color:#8e8e93;">正在查詢釋義...</span>';
       sheet.classList.add('active');
 
       try {
-        // 同步請求英英辭典與中英翻譯
         const dictPromise = fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`)
-          .then(res => res.ok ? res.json() : null)
-          .catch(() => null);
+          .then(res => res.ok ? res.json() : null).catch(() => null);
 
-        const transPromise = fetch(`https://api.mymemory.translated.net/get?q=${cleanWord}&langpair=en|zh-TW`)
-          .then(res => res.ok ? res.json() : null)
-          .catch(() => null);
+        const transPromise = fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanWord)}&langpair=en|zh-TW`)
+          .then(res => res.ok ? res.json() : null).catch(() => null);
 
         const [dictData, transData] = await Promise.all([dictPromise, transPromise]);
 
-        // 處理音標
         let phonetic = '';
         let enDef = '';
         if (dictData && dictData.length > 0) {
@@ -405,7 +480,6 @@
         }
         sPho.textContent = phonetic ? `/${phonetic.replace(/\//g, '')}/` : '';
 
-        // 處理中文翻譯
         let zhDef = '';
         if (transData && transData.responseData) {
           zhDef = transData.responseData.translatedText || '';
@@ -423,11 +497,88 @@
           }
           sMean.innerHTML = output;
         }
-
       } catch (e) {
         sPho.textContent = '';
-        sMean.innerHTML = '網路連線異常，請稍後重試。';
+        sMean.innerHTML = '連線異常，請稍後重試。';
       }
+    }
+
+    // 2. 選取文字/句子翻譯 (選取範圍監聽)
+    let selectionTimeout = null;
+    function handleSelection() {
+      clearTimeout(selectionTimeout);
+      selectionTimeout = setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+
+        // 僅當選取多個單字（包含空格）且字數大於 2 個字時觸發範圍翻譯
+        if (selectedText.length > 1 && (selectedText.includes(' ') || selectedText.length > 25)) {
+          translateSelectedSentence(selectedText);
+        }
+      }, 500);
+    }
+
+    async function translateSelectedSentence(sentence) {
+      currentTextToSpeak = sentence;
+      const sheet = document.getElementById('dictSheet');
+      const sWord = document.getElementById('sheetWord');
+      const sPho = document.getElementById('sheetPhonetic');
+      const sMean = document.getElementById('sheetMeaning');
+
+      sWord.textContent = sentence.length > 30 ? sentence.substring(0, 30) + '...' : sentence;
+      sPho.textContent = '片段/句子翻譯';
+      sMean.innerHTML = '<span style="color:#8e8e93;">正在為您翻譯整句...</span>';
+      sheet.classList.add('active');
+
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(sentence)}&langpair=en|zh-TW`);
+        if (res.ok) {
+          const data = await res.json();
+          const zh = data?.responseData?.translatedText || '翻譯失敗';
+          sMean.innerHTML = `<div style="font-size:18px; font-weight:600; color:#007aff; line-height:1.6;">${zh}</div>`;
+        } else {
+          sMean.innerHTML = '翻譯失敗，請再試一次。';
+        }
+      } catch (e) {
+        sMean.innerHTML = '翻譯逾時，請檢查連線。';
+      }
+    }
+
+    // 3. 一鍵全文翻譯
+    async function translateFullArticle() {
+      const text = document.getElementById('inputArticle').value.trim();
+      if (!text) return;
+
+      const area = document.getElementById('fullTranslationArea');
+      const content = document.getElementById('fullTransContent');
+
+      area.style.display = 'block';
+      content.innerHTML = '<span style="color:#8e8e93;">🔄 正在翻譯全文，請稍候...</span>';
+      area.scrollIntoView({ behavior: 'smooth' });
+
+      // 將全文依段落切分，逐段翻譯以確保翻譯品質與避免超出長度
+      const paragraphs = text.split(/\n+/);
+      const translatedParagraphs = [];
+
+      try {
+        for (let p of paragraphs) {
+          if (!p.trim()) continue;
+          const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(p)}&langpair=en|zh-TW`);
+          if (res.ok) {
+            const data = await res.json();
+            translatedParagraphs.push(data?.responseData?.translatedText || p);
+          } else {
+            translatedParagraphs.push(p);
+          }
+        }
+        content.textContent = translatedParagraphs.join('\n\n');
+      } catch (e) {
+        content.innerHTML = '<span style="color:#ff3b30;">全文翻譯連線發生錯誤，請稍後重試。</span>';
+      }
+    }
+
+    function closeFullTranslation() {
+      document.getElementById('fullTranslationArea').style.display = 'none';
     }
 
     function closeSheet() {
